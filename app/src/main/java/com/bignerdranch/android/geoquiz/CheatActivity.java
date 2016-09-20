@@ -28,7 +28,7 @@ public class CheatActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cheat);
         if (savedInstanceState == null) {
-            // avoid cheating at startup
+            // avoid default cheating at startup
             setAnswerShownResult(false);
         }
         mAnswerIsTrue = getIntent().getBooleanExtra(EXTRA_ANSWER_IS_TRUE, false);

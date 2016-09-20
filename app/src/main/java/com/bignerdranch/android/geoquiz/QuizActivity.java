@@ -13,6 +13,7 @@ import android.widget.Toast;
 public class QuizActivity extends AppCompatActivity {
     private static final String TAG = "QuizActivity";
     private static final String KEY_INDEX = "index";
+    private static final String CHEAT_ARRAY = "questionsCheated";
 
     private Button mTrueButton;
     private Button mFalseButton;
@@ -33,6 +34,7 @@ public class QuizActivity extends AppCompatActivity {
     };
 
     private int mCurrentIndex = 0;
+    private boolean [] mCheatedArray = new boolean [mQuestionBank.length];
     private boolean mIsCheater;
 
 
@@ -43,30 +45,37 @@ public class QuizActivity extends AppCompatActivity {
         int clear_ans = R.string.def_ans;
         mQuestionTextView.setText(question);
         mAnswerTextView.setText(clear_ans);
+        mIsCheater = false;
     }
 
     private void checkAnswer(boolean userPressedTrue){
         boolean answerIsTrue = mQuestionBank[mCurrentIndex].isTrueQuestion();
         int messageResId = 0;
         int answer = R.string.def_ans;
-        if(mIsCheater){
-            if(userPressedTrue == answerIsTrue){
-                messageResId = R.string.judgment_toast;
-            }else{
-                messageResId = R.string.incorrect_judgment_toast;
-                answer = mQuestionBank[mCurrentIndex].getAnswer();
-            }
-        }else{
-            if(userPressedTrue == answerIsTrue){
-                messageResId = R.string.correct_toast;
-            }else{
-                messageResId = R.string.incorrect_toast;
-                answer = mQuestionBank[mCurrentIndex].getAnswer();
+        if(mCheatedArray[mCurrentIndex]==true){
+            messageResId = R.string.second_judgment_toast;
+        }else {
+            if (mIsCheater) {
+                if (userPressedTrue == answerIsTrue) {
+                    messageResId = R.string.judgment_toast;
+
+                } else {
+                    messageResId = R.string.incorrect_judgment_toast;
+                    answer = mQuestionBank[mCurrentIndex].getAnswer();
+                }
+                mCheatedArray[mCurrentIndex] = true;
+            } else {
+                if (userPressedTrue == answerIsTrue) {
+                    messageResId = R.string.correct_toast;
+                } else {
+                    messageResId = R.string.incorrect_toast;
+                    answer = mQuestionBank[mCurrentIndex].getAnswer();
+                }
             }
         }
-        mAnswerTextView.setText(answer);
-        Toast.makeText(this,messageResId,Toast.LENGTH_SHORT)
-                .show();
+            mAnswerTextView.setText(answer);
+            Toast.makeText(this, messageResId, Toast.LENGTH_SHORT)
+                    .show();
     }
 
     @Override
@@ -76,6 +85,8 @@ public class QuizActivity extends AppCompatActivity {
 
         if(savedInstanceState != null){
             mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
+            mCheatedArray = savedInstanceState.getBooleanArray(CHEAT_ARRAY);
+            Log.d(TAG, "SavedInstanceState restored");
         }else{
             mCurrentIndex = 0;
         }
@@ -108,7 +119,7 @@ public class QuizActivity extends AppCompatActivity {
                 Intent i = new Intent(QuizActivity.this, CheatActivity.class);
                 boolean answerIsTrue = mQuestionBank[mCurrentIndex].isTrueQuestion();
                 i.putExtra(CheatActivity.EXTRA_ANSWER_IS_TRUE, answerIsTrue);
-                startActivity(i);
+                startActivityForResult(i,0);
             }
         });
         mNextButton = (ImageButton)findViewById(R.id.next_button);
@@ -139,6 +150,7 @@ public class QuizActivity extends AppCompatActivity {
         super.onSaveInstanceState(savedInstanceState);
         Log.i(TAG, "onSaveInstanceState");
             savedInstanceState.putInt(KEY_INDEX, mCurrentIndex);
+            savedInstanceState.putBooleanArray(CHEAT_ARRAY,mCheatedArray);
         }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////LOGGING LIFECYCLE METHODS//////////////////////////////////////////////
@@ -172,6 +184,7 @@ public class QuizActivity extends AppCompatActivity {
         super.onDestroy();
         Log.d(TAG,"onDestroy() called");
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         mIsCheater = data.getBooleanExtra(CheatActivity.EXTRA_ANSWER_SHOWN, false);
